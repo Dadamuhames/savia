@@ -77,7 +77,7 @@ WSGI_APPLICATION = 'savia.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-TEST_DOMEN = False
+TEST_DOMEN = True
 
 
 if TEST_DOMEN:
