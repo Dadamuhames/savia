@@ -39,11 +39,11 @@ INSTALLED_APPS = [
     'django.contrib.messages', 'colorfield', 'rest_framework',
     'django.contrib.staticfiles', 'order', 'main', 'corsheaders', 
     'easy_thumbnails', 'admins', 'autoslug',
-    'django_cleanup.apps.CleanupConfig', "debug_toolbar",
+    'django_cleanup.apps.CleanupConfig', #"debug_toolbar",
 ]
 
 MIDDLEWARE = [
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
+    #"debug_toolbar.middleware.DebugToolbarMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -202,8 +202,8 @@ CORS_ALLOW_HEADERS = [
 ]
 
 
-INTERNAL_IPS = [
+#INTERNAL_IPS = [
     # ...
-    "127.0.0.1",
+#    "127.0.0.1",
     # ...
-]
+#]
