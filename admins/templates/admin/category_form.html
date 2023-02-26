@@ -1,0 +1,340 @@
+{% extends 'admin/base_template.html' %}
+{% load static %}
+{% load get_item %}
+{% load image_thumb %}
+
+
+{% block title %} Категории {% endblock %}
+
+
+{% block page_title %} Категории {% endblock %}
+
+
+{% block nav_ol %}
+<ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+    <li class="breadcrumb-item ">
+        <a href="{% url 'category_list' %}">Категории</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="&quot;page&quot;">
+        Создать
+    </li>
+</ol>
+{% endblock %}
+
+{% block content_width %} class="col-12" {% endblock %}
+
+
+{% block content %}
+<form method="POST" class="row" enctype="multipart/form-data" action="">
+    {% csrf_token %}
+    {{ some_error }}
+    <input type="hidden" name="dropzone-key" value="{{ dropzone_key }}">
+    <input type="hidden" name="id" value="{{ object.id }}">
+    <input type="hidden" name="url" value="{{ request.get_full_path }}">
+    <div class="col-12 col-xl-8">
+        <div class="card mt-3">
+            <div class="crd-header p-4 pb-0">
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    {% for lang in langs %}
+                    {% if lang == langs.first %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-3 py-2 active" id="tab_{{ lang.id }}" data-bs-toggle="tab"
+                            data-bs-target="#{{ lang.code }}" type="button" role="tab" aria-controls="{{ lang.code }}"
+                            aria-selected="true">{{ lang.name }}</button>
+                    </li>
+                    {% else %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-3 py-2" id="tab_{{ lang.id }}" data-bs-toggle="tab"
+                            data-bs-target="#{{ lang.code }}" type="button" role="tab" aria-controls="{{ lang.code }}"
+                            aria-selected="false">{{ lang.name }}</button>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-bodyb p-5">
+                <div class="tab-content" id="myTabContent">
+                    {% for lang in langs %}
+                        <div {% if lang == langs.first %} class="tab-pane fade show active" {% else %} class="tab-pane fade" {% endif %} id="{{ lang.code }}" role="tabpanel"
+                        aria-labelledby="{{ lang.code }}">
+                            <div class="form-group">
+                                <!-- Label  -->
+                                <label {% if lang.default %} class="form-label required" {% else %} class="form-label" {% endif %}>
+                                    Название
+                                </label>
+                                <br>
+                                <!-- Input -->
+                                <input type="text" name="name#{{ lang.code }}" class="form-control" 
+                                {% if object and object.name|get_item:lang.code %} value="{{ object.name|get_item:lang.code }}" 
+                                {% elif request_post and request_post|get_item:'name' %}
+                                    value="{{ request_post|get_item:'name'|get_item:lang.code }}" 
+                                {% endif %}>
+                                {% if lang.default %}
+                                <div class="invalid-feedback" style="display: block;">
+                                    {% if errors.name %}
+                                    {{ errors.name|list_item:0 }}
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <!-- Label  -->
+                                <label class="form-label">
+                                    Описание
+                                </label>
+                                <br>
+                                <!-- Input -->
+                                <textarea class="editor" name="deckription#{{ lang.code }}"
+                                    placeholder="Text">{% if object and object.deckription|get_item:lang.code %} {{ object.deckription|get_item:lang.code }} {% elif request_post and request_post|get_item:'deckription' %}{{ request_post|get_item:'deckription'|get_item:lang.code }}{% endif %}</textarea>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <!-- Buttons -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-xl-4">
+        <div class="card mt-3">
+            <div class="card-body p-4">
+                <div class="form-group">
+                    <!-- Label  -->
+                    <label class="form-label">
+                        Атрибуты
+                    </label>
+                    <br>
+                    <!-- Input -->
+                    <select class="form-control mb-4" data-choices='{"removeItemButton": true}' name="atributs[]" multiple>
+                        {% for atr in relateds %}
+                            {% if object and atr in object.atributs.all %}
+                                <option value="{{ atr.id }}" selected>{{ atr.name|get_item:lang.code }}</option>
+                            {% elif request_post and atr.id in request_post|get_item:'atributs' %}
+                                <option value="{{ atr.id }}" selected>{{ atr.name|get_item:lang.code }}</option>
+                            {% else %}
+                                <option value="{{ atr.id }}">{{ atr.name|get_item:lang.code }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <!-- Label  -->
+                    <label class="form-label">
+                        Родительская категория
+                    </label>
+                    <br>
+                    <!-- Input -->
+                    <select class="form-control mb-4" data-choices="" name="parent">
+                        <option value="">-----</option>
+                        {% for ctg in categories %}
+                            {% if object and ctg == object.parent %}
+                                <option value="{{ ctg.id }}" selected>{{ ctg.name|get_item:lang.code }}</option>
+                            {% elif request_post and ctg.id in request_post|get_item:'parent' %}
+                                <option value="{{ ctg.id }}" selected>{{ ctg.name|get_item:lang.code }}</option>
+                            {% else %}
+                                <option value="{{ ctg.id }}">{{ ctg.name|get_item:lang.code }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <!-- Label  -->
+                    <label class="form-label">
+                        Файл коталога
+                    </label>
+                    <br>
+                    <!-- Input -->
+                    <input type="file" name="cotalog" class="form-control" id="customFileUploadMultiple">
+                    {% if object and object.cotalog %}
+                    <div class="row">
+                        <a class="d-block col-6" href="{{ object.cotalog.url }}">Скачать</a>
+                        <a class="text-danger d-block col-6" style="cursor: pointer;" onclick="var result = confirm('Want to delete?');if (result){submit_form('delete-form-logo_sec')}"
+                            data-dz-remove>Удалить</a>
+                        <div action="{% url 'del_ctg_file' %}" id="delete-form-logo_sec" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="key" value="cotalog">
+                            <input type="hidden" name="obj_id" value="{{ object.id }}">
+                        </div>
+                    </div>
+                    
+                    {% endif %}
+                </div>
+    
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <!-- Dropzone -->
+                            <label for="dropzone" class="form-label">Фото</label>
+                            <!-- Dropzone -->
+                            <div class="dropzone dropzone-multiple border-0" data-max="1" data-delete="/admin/images/delete"
+                                data-url="/admin/images/save" data-key="{{ dropzone_key }}_image">
+                                <!-- Fallback -->
+                                <div class="dz-preview d-none"></div>
+                                <div class="fallback">
+                                    <div class="custom-file">
+                                        <input type="file" name="file" class="form-control" id="customFileUploadMultiple">
+                                        <label class="form-label" for="customFileUploadMultiple">Choose file</label>
+                                    </div>
+                                </div>
+                
+                                <!-- Preview -->
+                                <div class="dz-preview-container" id="ctg_image" style="padding: 0;">
+                                    {% if object %}
+                                        <div class="dz-preview dz-processing dz-complete dz-image-preview d-none">
+                                            <div class="dz-image">
+                                                <img data-dz-thumbnail="" src="" alt="">
+                                            </div>
+                                            <div class="dz-details">
+                                                <div class="dz-filename"><span data-dz-name=""></span></div>
+                                            </div>
+                                            <a class="dz-remove" data-file="" data-dz-remove>Удалить</a>
+                                        </div>
+                                        {% if object.image %}
+                                        <div class="dz-preview dz-processing dz-complete dz-image-preview" style="position: relative;">
+                                            <div class="dz-image">
+                                                <img data-dz-thumbnail="" src='{% image_thumb object.image alias="ten" request=request %}'
+                                                    alt="{{ object.image }}">
+                                            </div>
+                                            <div class="dz-details">
+                                                <div class="dz-filename"><span data-dz-name="">{{ object.image }}</span></div>
+                                            </div>
+                                            <a class="dz-remove" data-file="{{ img.id }}"
+                                                onclick="var result = confirm('Want to delete?');if (result){submit_form('delete-form-logo_first')}"
+                                                data-dz-remove>Удалить</a>
+                                            <div action="{% url 'del_ctg_file' %}" id="delete-form-logo_first" method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="obj_id" value="{{ object.id }}">
+                                                <input type="hidden" name="key" value="image">
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% else %}
+                                        {% for img in images %}
+                                        <div class="dz-preview dz-processing dz-complete dz-image-preview">
+                                            <div class="dz-image">
+                                                <img data-dz-thumbnail="" src="/media/{{ img|get_item:'name' }}" alt="{{ img }}">
+                                            </div>
+                                            <div class="dz-details">
+                                                <div class="dz-filename"><span data-dz-name="">{{ img.name }}</span></div>
+                                            </div>
+                                            <a class="dz-remove" data-file="{{ img }}"
+                                                onclick="var result = confirm('Want to delete?');if (result){submit_form('delete-form{{ img.id }}')}"
+                                                data-dz-remove>Удалить</a>
+                                            <div action="{% url 'del-img' %}" id="delete-form{{ img.id }}" method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="url" value="{{ request.get_full_path }}">
+                                                <input type="hidden" name="key" value="{{ dropzone_key }}_image">
+                                                <input type="hidden" name="file" value="{{ img.name }}">
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                    
+                                </div>
+                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <!-- Dropzone -->
+                            <label for="dropzone" class="form-label">Иконка</label>
+                            <div class="dropzone dropzone-multiple border-0" data-max="1" data-delete="/admin/images/delete"
+                                data-url="/admin/images/save" data-key="{{ dropzone_key }}_icon">
+                                <!-- Fallback -->
+                                <div class="dz-preview d-none"></div>
+                                <div class="fallback">
+                                    <div class="custom-file">
+                                        <input type="file" name="file" class="form-control" id="customFileUploadMultiple">
+                                        <label class="form-label" for="customFileUploadMultiple">Choose file</label>
+                                    </div>
+                                </div>
+                
+                                <!-- Preview -->
+                                <div class="dz-preview-container" id="logo2" style="padding: 0;">
+                                    {% if object %}
+                                        <div class="dz-preview dz-processing dz-complete dz-image-preview d-none">
+                                            <div class="dz-image">
+                                                <img data-dz-thumbnail="" src="" alt="">
+                                            </div>
+                                            <div class="dz-details">
+                                                <div class="dz-filename"><span data-dz-name=""></span></div>
+                                            </div>
+                                            <a class="dz-remove" data-file="" data-dz-remove>Удалить</a>
+                                        </div>
+                                        {% if object.icon %}
+                                        <div class="dz-preview dz-processing dz-complete dz-image-preview" style="position: relative;">
+                                            <div class="dz-image">
+                                                <img data-dz-thumbnail="" src="{{ object.icon.ten.url }}"
+                                                    alt="{{ object.logo_second }}">
+                                            </div>
+                                            <div class="dz-details">
+                                                <div class="dz-filename"><span data-dz-name="">{{ object.icon }}</span></div>
+                                            </div>
+                                            <a class="dz-remove"
+                                                onclick="var result = confirm('Want to delete?');if (result){submit_form('delete-form-logo_sec')}"
+                                                data-dz-remove>Удалить</a>
+                                            <div action="{% url 'del_ctg_file' %}" id="delete-form-logo_sec" method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="key" value="icon">
+                                                <input type="hidden" name="obj_id" value="{{ object.id }}">
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% else %}
+                                    {% for img in icons %}
+                                    <div class="dz-preview dz-processing dz-complete dz-image-preview">
+                                        <div class="dz-image">
+                                            <img data-dz-thumbnail="" src="/media/{{ img|get_item:'name' }}" alt="{{ img }}">
+                                        </div>
+                                        <div class="dz-details">
+                                            <div class="dz-filename"><span data-dz-name="">{{ img.name }}</span></div>
+                                        </div>
+                                        <a class="dz-remove" data-file="{{ img }}"
+                                            onclick="var result = confirm('Want to delete?');if (result){submit_form('delete-form{{ img.id }}')}"
+                                            data-dz-remove>Удалить</a>
+                                        <div action="{% url 'del-img' %}" id="delete-form{{ img.id }}" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="url" value="{{ request.get_full_path }}">
+                                            <input type="hidden" name="key" value="{{ dropzone_key }}_icon">
+                                            <input type="hidden" name="file" value="{{ img.name }}">
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                    {% endif %}
+                                    
+                                </div>
+                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="row">
+                    <div class="col-12 col-xl-2">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" name="active" class="form-check-input" id="id_active" checked>
+                            <label class="form-check-label" for="flexSwitchCheckDefault">Active</label>
+                        </div>
+                    </div>
+                </div>
+                <br>
+    
+                <div class="btn-box text-end">
+                    <a href="#" class="btn w-30 btn-secondary">
+                        Отменить
+                    </a>
+                    <input type="submit" href="#" class="btn w-40 btn-primary" value="Сохранить">
+                </div>
+    
+            </div>
+        </div>
+    </div>
+</form>
+<script>
+    for (let txt of document.querySelectorAll('.editor')) {
+        CKEDITOR.replace(txt)
+    }
+</script>
+<!-- Form -->
+{% endblock %}
