@@ -23,5 +23,6 @@ urlpatterns = [
     path('admin-panel/', admin.site.urls),
     path("admin/", include("admins.urls")),
     path('__debug__/', include('debug_toolbar.urls')),
-    path("api/", include("main.urls"))
+    path("api/", include("main.urls")),
+    path("api/", include('order.urls'))
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

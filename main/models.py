@@ -90,6 +90,10 @@ def delete_variants(sender, instance, **kwargs):
             ProductVariants.objects.filter(product=obj).delete()
 
 
+# product images
+class ProducVariantImages(models.Model):
+    image = ThumbnailerImageField(upload_to='variant_images', blank=True, null=True)
+
 # product variant
 class ProductVariants(models.Model):
     product = models.ForeignKey(Products, on_delete=models.CASCADE, related_name='variants')
@@ -97,7 +101,7 @@ class ProductVariants(models.Model):
     color = models.ForeignKey(Colors, on_delete=models.CASCADE)
     slug = models.SlugField('Slug', editable=False, unique=True)
     options = models.ManyToManyField(AtributOptions, blank=True, null=True)
-    image = ThumbnailerImageField(upload_to='variant_images', blank=True, null=True)
+    images = models.ManyToManyField(ProducVariantImages, blank=True, null=True)
     code = models.CharField('Code', max_length=255)
     top = models.BooleanField('Top', default=False)
     default = models.BooleanField("Default", default=False)

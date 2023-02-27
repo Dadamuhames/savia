@@ -901,8 +901,7 @@ class ShortApplicationUpdate(UpdateView):
     success_url = '/admin/quick_applications'
 
     def get_context_data(self, **kwargs):
-        context = super(ShortApplicationUpdate,
-                        self).get_context_data(**kwargs)
+        context = super(ShortApplicationUpdate, self).get_context_data(**kwargs)
         context['statuses'] = ["На рассмотрении", "Рассмотрено", "Отклонено"]
         context['lang'] = Languages.objects.filter(default=True).first()
 
