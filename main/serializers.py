@@ -237,11 +237,10 @@ class ProductsSerializer(ProductSimpleSerializer):
 
 
 
-
 # product variant serializer
 class ProductVariantSimpleSerializer(serializers.ModelSerializer):
     product = ProductSimpleSerializer()
-    image = ThumbnailSerializer(alias='product_img')
+    #image = ThumbnailSerializer(alias='product_img')
 
     class Meta:
         model = ProductVariants
