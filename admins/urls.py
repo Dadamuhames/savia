@@ -95,5 +95,7 @@ urlpatterns = [
          login_url='login_admin')(views.ColorsCreate.as_view()), name='color_create'),
     path("colors/<int:pk>/edit", user_passes_test(lambda u: u.is_superuser,
          login_url='login_admin')(views.ColorEdit.as_view()), name='colors_edit'),
+    path("atributs/<int:pk>", user_passes_test(lambda u: u.is_superuser,
+         login_url='login_admin')(views.AtributsDetailView.as_view()), name='atribut_detail'),
     #path("fill_db_qwertyuiop", user_passes_test(lambda u: u.is_superuser, login_url='login_admin')(views.fill_db_view))
 ]

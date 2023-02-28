@@ -1,4 +1,4 @@
-from .models import Products, Category, AtributOptions, Atributs, Colors, ProductVariants
+from .models import Products, Category, AtributOptions, Atributs, Colors, ProductVariants, ProducVariantImages
 from admins.models import Languages
 from rest_framework import serializers
 from django.conf import settings
@@ -246,6 +246,15 @@ class ProductVariantSimpleSerializer(serializers.ModelSerializer):
         model = ProductVariants
         exclude = ['options', 'top', 'default']
 
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        image = instance.images.first()
+        data['image'] = ThumbnailSerializer(image, alias='prod_photo').data
+
+        return data
+
 
 # top product serializer
 class TopProductSerializer(serializers.Serializer):
@@ -276,7 +285,60 @@ class TopProductSerializer(serializers.Serializer):
         return data
 
 
+# product variant images
+class ProductVariantImagesSerializer(serializers.ModelSerializer):
+    image = ThumbnailSerializer(alias='product_img')
+    
+    class Meta:
+        model = ProducVariantImages
+        fields = '__all__'
+
+
 
 # product variant detail serializer
 class ProductVariantDetailSerializer(ProductVariantSimpleSerializer):
-    pass
+    product = ProductsSerializer()
+    images = ProductVariantImagesSerializer(many=True)
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['atributs'] = []
+
+        variants = instance.product.variants.all()                        
+        atributs = []
+        for atr in instance.product.category.atributs.all():
+            atributs.append(atr)
+
+        for atr in instance.product.category.parent.atributs.all():
+            atributs.append(atr)
+
+
+        for atr in atributs:
+            atr_data = AtributSerializer(atr).data
+            options = atr_data['options']
+            
+            opt_lst = [it for it in instance.options.all()]
+
+            for opt in opt_lst:
+                if opt.atribut == atr:
+                    opt_lst.remove(opt)
+
+            for opt in options:
+                lst = opt_lst.copy()
+                opshn = AtributOptions.objects.get(id=opt['id'])             
+                lst.append(opshn)
+                id_lst = [it.id for it in lst]
+                
+                variant = variants.filter(color=instance.color)
+                for id in id_lst:
+                    variant = variant.filter(options=id)
+
+                if not variant.exists(): 
+                    opt['variant'] = None
+                else:
+                    opt['variant'] = variant.first().id
+
+            data['atributs'].append(atr_data)
+
+
+        return data

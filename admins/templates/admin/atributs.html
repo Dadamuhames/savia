@@ -47,7 +47,8 @@
                     <div class="d-flex">
                         <div class="input-group input-group-flush input-group-merge input-group-reverse"
                             style="width: 200px;">
-                            <input class="form-control" name="q" type="search" placeholder="Search" {% if request.GET.q %} value="{{ request.GET.q }}" {% endif %}>
+                            <input class="form-control" name="q" type="search" placeholder="Search" 
+                            {% if request.GET.q %} value="{{ request.GET.q }}" {% endif %}>
                             <span class="input-group-text">
                                 <i class="fe fe-search"></i>
                             </span>
@@ -83,20 +84,22 @@
                     </td>
                     <td>
                         <p class="item-phone text-reset">
-                        {{ obj.name|get_item:lang.code }}
+                            {{ obj.name|get_item:lang.code }}
                         </p>
                     </td>
                     <td>
                         <ul>
                             {% for opt in obj.options.all %}
-                                <li class="atribut_options" data-id="{{ opt.id }}" data-get="{% url 'get_atr_option' %}" style="cursor: pointer;" data-bs-toggle="modal"
-                                data-bs-target="#atributOptionModal">{{ opt.name|get_item:lang.code }}</li>
+                            <li class="atribut_options" data-id="{{ opt.id }}" data-get="{% url 'get_atr_option' %}"
+                                style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#atributOptionModal">{{ opt.name|get_item:lang.code }}</li>
                             {% endfor %}
                         </ul>
                     </td>
                     <td>
                         <div class="d-flex justify-content-end">
-                            <a href="{% url 'atribut_edit' obj.id %}" class="btn btn-sm btn-info"><i
+                            <a href="{% url 'atribut_detail' obj.id %}" class="btn btn-sm btn-primary"><i
+                                    class="fe fe-info"></i></a>
+                            <a href="{% url 'atribut_edit' obj.id %}" class="btn btn-sm btn-info ms-3"><i
                                     class="fe fe-edit-2"></i></a>
                             <a class="btn btn-sm btn-danger ms-3"
                                 onclick="var result = confirm('Want to delete?');if (result){form_submit_in_table('delete-form{{ obj.id }}')}"><i
@@ -117,7 +120,8 @@
         </table>
     </div>
 
-    <div class="modal fade" id="atributOptionModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal fade" id="atributOptionModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog">
             <form class="modal-content" id="option-edit-form" method="post">
                 {% csrf_token %}
@@ -138,9 +142,7 @@
                         <input type="text" name="name#{{ lang.code }}" class="form-control"
                             placeholder="{{ lang.code }}..." required>
                         {% if lang.default %}
-                        <div class="invalid-feedback" id="option_name_error">
-    
-                        </div>
+                        <div class="invalid-feedback" id="option_name_error"></div>
                         {% endif %}
                     </div>
                     {% endfor %}

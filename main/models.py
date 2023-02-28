@@ -97,7 +97,8 @@ class ProducVariantImages(models.Model):
 # product variant
 class ProductVariants(models.Model):
     product = models.ForeignKey(Products, on_delete=models.CASCADE, related_name='variants')
-    price = models.FloatField('Price', validators=[MinValueValidator(0)])
+    price = models.FloatField('Price', validators=[MinValueValidator(0)],blank=True, null=True)
+    contract_price  = models.BooleanField(default=False)
     color = models.ForeignKey(Colors, on_delete=models.CASCADE)
     slug = models.SlugField('Slug', editable=False, unique=True)
     options = models.ManyToManyField(AtributOptions, blank=True, null=True)
