@@ -251,7 +251,8 @@ class ProductVariantSimpleSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
 
         image = instance.images.first()
-        data['image'] = ThumbnailSerializer(image, alias='prod_photo').data
+        if image:
+            data['image'] = ThumbnailSerializer(instance=image, alias='prod_photo').data
 
         return data
 
