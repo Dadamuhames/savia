@@ -244,7 +244,7 @@ class ProductVariantSimpleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductVariants
-        exclude = ['options', 'top', 'default']
+        exclude = ['options', 'top', 'default', 'images']
 
     
     def to_representation(self, instance):
