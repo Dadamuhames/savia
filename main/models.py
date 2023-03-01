@@ -64,8 +64,6 @@ class Products(models.Model):
     description = models.JSONField('Descr', blank=True, null=True)
     active = models.BooleanField('Active', default=True)
     meta = models.ForeignKey(MetaTags, on_delete=models.CASCADE, blank=True, null=True)
-    image = ThumbnailerImageField(
-        upload_to='product_images', blank=True, null=True)
 
     def save(self, *args, **kwargs):  # new
         if not self.slug:
