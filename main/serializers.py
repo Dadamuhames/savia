@@ -261,6 +261,7 @@ class ProductVariantSimpleSerializer(serializers.ModelSerializer):
 class TopProductSerializer(serializers.Serializer):
     def to_representation(self, instance):
         data = []
+        print(instance)
         categories = set()
         context = {'request': self.context.get('request', {})}
 
@@ -271,16 +272,18 @@ class TopProductSerializer(serializers.Serializer):
             except:
                 pass
 
+
         for ctg in categories:
             ctg_dict = Categoryserializer(ctg, context=context).data
             products_list = instance.filter(product__category__parent=ctg)
-            serializer = ProductVariantSimpleSerializer(products_list, many=True, context=context)
+            serializer = ProductVariantSimpleSerializer(products_list, many=True, context={'request': self.context.get('request', {})})
             ctg_dict['products'] = serializer.data
 
             data.append(ctg_dict)
 
+        
 
-        return data
+        return {'products': data}
 
 
 # product variant images

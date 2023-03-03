@@ -103,6 +103,7 @@ class ProductsList(generics.ListAPIView):
 class TopProducts(views.APIView):
     def get(self, request, format=None):
         products = ProductVariants.objects.filter(product__active=True).filter(top=True)
+        print(products)
         serializer = TopProductSerializer(products, context={'request': request})
 
         return Response(serializer.data)    
