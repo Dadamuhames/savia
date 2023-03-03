@@ -259,12 +259,12 @@ class ProductVariantSimpleSerializer(serializers.ModelSerializer):
 
 # top product serializer
 class TopProductSerializer(serializers.Serializer):
-    def to_representation(self, products):
+    def to_representation(self, instance):
         data = []
         categories = set()
         context = {'request': self.context.get('request', {})}
 
-        for product in products:
+        for product in instance:
             try:
                 ctg = product.product.category.parent
                 categories.add(ctg)
@@ -275,7 +275,7 @@ class TopProductSerializer(serializers.Serializer):
             ctg_dict = Categoryserializer(ctg, context=context).data
             products_list = []
 
-            for prod in products:
+            for prod in instance:
                 if prod.product.category.parent == ctg:
                     prod_dict = ProductVariantSimpleSerializer(prod, context=context).data
                     products_list.append(prod_dict)
