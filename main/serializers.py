@@ -273,14 +273,9 @@ class TopProductSerializer(serializers.Serializer):
 
         for ctg in categories:
             ctg_dict = Categoryserializer(ctg, context=context).data
-            products_list = []
-
-            for prod in instance:
-                if prod.product.category.parent == ctg:
-                    prod_dict = ProductVariantSimpleSerializer(prod, context=context).data
-                    products_list.append(prod_dict)
-
-            ctg_dict['products'] = products_list
+            products_list = instance.filter(product__category__parent=ctg)
+            serializer = ProductVariantSimpleSerializer(products_list, many=True, context=context)
+            ctg_dict['products'] = serializer.data
 
             data.append(ctg_dict)
 
