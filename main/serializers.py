@@ -204,7 +204,7 @@ class CategorySimpleSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['parent'] = JsonFieldSerializer(instance.parent.name, context={'request': self.context.get('request', {})})
+        data['parent'] = JsonFieldSerializer(instance.parent.name, context={'request': self.context.get('request', {})}).data
 
         return data
 
@@ -265,11 +265,11 @@ class TopProductSerializer(serializers.Serializer):
         context = {'request': self.context.get('request', {})}
 
         for product in products:
-            try:
-                ctg = product.product.category.parent
-                categories.add(ctg)
-            except:
-                pass
+            #try:
+            ctg = product.product.category.parent
+            categories.add(ctg)
+            #except:
+            #    pass
 
         for ctg in categories:
             ctg_dict = Categoryserializer(ctg, context=context).data
