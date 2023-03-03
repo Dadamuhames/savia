@@ -277,7 +277,7 @@ class TopProductSerializer(serializers.Serializer):
 
             for prod in product:
                 if prod.product.category.parent == ctg:
-                    prod_dict = ProductsSerializer(prod, context=context)
+                    prod_dict = ProductsSerializer(prod, context=context).data
                     ctg_dict['products'].add(prod_dict)
 
             data.append(ctg_dict)
