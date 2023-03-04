@@ -84,13 +84,13 @@ class ProductsList(generics.ListAPIView):
         post_ctg_id = self.request.GET.get('post_ctg')
         query = self.request.GET.get('q', '')
 
-        if ctg_id:
-            category = get_object_or_404(Category.objects.filter(parent=None), id=int(ctg_id)) 
-            queryset = queryset.filter(product__category__parent=category)
+     
+        category = get_object_or_404(Category.objects.all(), id=int(ctg_id)) 
         
-        if post_ctg_id:
-            post_ctg = get_object_or_404(Category.objects.filter(children=None),  id=int(post_ctg_id))
-            queryset = queryset.filter(product__category=post_ctg)
+        if category.parent is None:
+            queryset = queryset.filter(product__category__parent=category)
+        elif category.parent is not None and category.children is None:
+            queryset = queryset.filter(product__category=category)
 
         if query != '':
             products = Products.objects.filter(active=True).extra(where=[f'LOWER(name) LIKE %s'], params=[f'%{query.lower()}%'])
