@@ -1,4 +1,4 @@
-from .models import Products, Category, AtributOptions, Atributs, Colors, ProductVariants, ProducVariantImages
+from .models import Products, Category, AtributOptions, Atributs, Colors, ProductVariants, ProducVariantImages, Baners, Newsletter
 from admins.models import Languages
 from rest_framework import serializers
 from django.conf import settings
@@ -343,3 +343,18 @@ class ProductVariantDetailSerializer(ProductVariantSimpleSerializer):
 
 
         return data
+    
+
+
+# baner
+class BanerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Baners
+        fields = '__all__'
+
+
+# newslatters
+class NewsletterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Newsletter
+        fields = '__all__'

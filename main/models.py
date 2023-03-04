@@ -122,5 +122,19 @@ class ProductVariants(models.Model):
 
 
 
+# baners
+class Baners(models.Model):
+    baner = ThumbnailerImageField('Baner', upload_to='baners')
+    link = models.URLField('Link', blank=True, null=True)
+    active = models.BooleanField(default=True)
+
+
+# Newsletter
+class Newsletter(models.Model):
+    number = models.CharField("Number", max_length=255)
+    active = models.BooleanField(default=True)
+
+
+
 
 

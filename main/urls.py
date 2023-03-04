@@ -14,5 +14,7 @@ urlpatterns = [
     path("top_products", views.TopProducts.as_view()),
     path("cart_view", views.CartView.as_view()),
     path("faq", views.FAQview.as_view()),
-    path("search", views.Search.as_view())
+    path("search", views.Search.as_view()),
+    path("baners", views.BanersView.as_view()),
+    path("subscribe", views.AddNewslatter.as_view())
 ]

@@ -35,7 +35,7 @@ class BasedListView(ListView):
             qs = queryset.extra(where=[f'LOWER({field}) LIKE %s'], params=[f'%{query.lower()}%'])
             for item in qs:
                 end_set.add(item)
-
+    
         queryset = list_to_queryset(list(end_set))
 
         return queryset
