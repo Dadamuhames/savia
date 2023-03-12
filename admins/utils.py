@@ -213,7 +213,7 @@ def get_baner(key, id, request, def_data=None):
             files = request.session.get(f'{key}_{lang.code}')
 
             if files:
-                images = [it for it in list(files, []) if str(it['id']) == str(id)]
+                images = [it for it in list(files) if str(it['id']) == str(id)]
                 image = images[0]
                 baner_data[lang.code] = image['name']
 
