@@ -73,6 +73,9 @@
                         <a class="list-sort text-muted" data-sort="item-name" href="#">Изображение</a>
                     </th>
                     <th>
+                        <span class="text-muted" data-sort="item-title">Порядок</span>
+                    </th>
+                    <th>
                         <span class="text-muted" data-sort="item-title">Статус</span>
                     </th>
                     <th style="width: 200px;"></th>
@@ -94,6 +97,7 @@
                             {% endif %}
                         </div>
                     </td>
+                    <td>{{ obj.order }}</td>
                     <td>
                         {% if obj.active %}
                         <span class="badge bg-success-soft">Active</span>

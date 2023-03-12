@@ -127,6 +127,7 @@ class Baners(models.Model):
     baner = models.JSONField('Baner', validators=[json_field_validate])
     link = models.URLField('Link', blank=True, null=True)
     active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField('order', blank=True, null=True)
 
 
 # Newsletter
@@ -140,4 +141,5 @@ class CustomDesigns(models.Model):
     title = models.JSONField('Design name', validators=[json_field_validate])
     image = ThumbnailerImageField(upload_to='design_images')
     active = models.BooleanField(default=True)
+
 

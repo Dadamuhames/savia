@@ -1,4 +1,4 @@
-from .models import Products, Category, AtributOptions, Atributs, ProductVariants, Colors, Baners, Newsletter
+from .models import Products, Category, AtributOptions, Atributs, ProductVariants, Colors, Baners, Newsletter, CustomDesigns
 from rest_framework import generics, views, pagination, filters
 from .serializers import ProductsSerializer, Categoryserializer, ProductVariantSimpleSerializer, TopProductSerializer, FAQserializer, CategoryDetailSerializer
 from .serializers import ArticleSerializer, StaticInformationSerializer, TranslationSerializer, LangsSerializer, ProductVariantDetailSerializer, ArticleDetailSerializer
@@ -180,11 +180,12 @@ class AddNewslatter(generics.CreateAPIView):
 # baners view
 class BanersView(generics.ListAPIView):
     serializer_class = BanerSerializer
-    queryset = Baners.objects.filter(active=True)
+    queryset = Baners.objects.filter(active=True).order_by('order')
 
 
 
 # designs view
 class DesignsListView(generics.ListAPIView):
     serializer_class = CustomDesighSerializer
+    queryset = CustomDesigns.objects.filter(active=True)
     pagination_class = BasePagination
