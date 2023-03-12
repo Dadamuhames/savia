@@ -402,7 +402,7 @@ class BanerImageSerializer(ThumbnailSerializer):
             return None
 
         if request is not None:
-            final_url = '/media/' + str(url).split('\media\\')[-1].replace('\\', "/")
+            final_url = '/media/' + str(url).split('/media/')[-1].replace('\\', "/")
             return request.build_absolute_uri(final_url)
 
         return url
