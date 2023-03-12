@@ -222,10 +222,10 @@ def get_baner(key, id, request, def_data=None):
             elif def_data:
                 baner_data[lang.code] = def_data.get(lang.code, '')
 
-            
-                for it in images:
-                    request.session.get(f'{key}_{lang.code}').remove(it)
-                    request.session.modified = True
+        
+            for it in images:
+                request.session.get(f'{key}_{lang.code}').remove(it)
+                request.session.modified = True
 
 
 
