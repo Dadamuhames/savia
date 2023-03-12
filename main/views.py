@@ -2,7 +2,7 @@ from .models import Products, Category, AtributOptions, Atributs, ProductVariant
 from rest_framework import generics, views, pagination, filters
 from .serializers import ProductsSerializer, Categoryserializer, ProductVariantSimpleSerializer, TopProductSerializer, FAQserializer, CategoryDetailSerializer
 from .serializers import ArticleSerializer, StaticInformationSerializer, TranslationSerializer, LangsSerializer, ProductVariantDetailSerializer, ArticleDetailSerializer
-from .serializers import NewsletterSerializer, BanerSerializer
+from .serializers import NewsletterSerializer, BanerSerializer, CustomDesighSerializer
 from admins.models import Articles, StaticInformation, Translations, Languages, FAQ
 from rest_framework.response import Response
 from rest_framework import status
@@ -99,6 +99,13 @@ class ProductsList(generics.ListAPIView):
 
 
         return queryset
+    
+
+# product detail
+class ProductDetail(generics.RetrieveAPIView):
+    serializer_class = ProductVariantDetailSerializer
+    queryset = ProductVariants.objects.filter(product__active=True)
+    lookup_field = 'slug'
 
 
 # top products serializer
@@ -165,7 +172,6 @@ class Search(views.APIView):
         return Response(data_dict)
     
 
-
 # add Newsletter
 class AddNewslatter(generics.CreateAPIView):
     serializer_class = NewsletterSerializer
@@ -175,3 +181,10 @@ class AddNewslatter(generics.CreateAPIView):
 class BanersView(generics.ListAPIView):
     serializer_class = BanerSerializer
     queryset = Baners.objects.filter(active=True)
+
+
+
+# designs view
+class DesignsListView(generics.ListAPIView):
+    serializer_class = CustomDesighSerializer
+    pagination_class = BasePagination

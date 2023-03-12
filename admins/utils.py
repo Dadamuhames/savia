@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse, QueryDict
 import re
 from django.core.files.storage import default_storage
+from main.models import ProductVariants
 
 # get request.data in JSON
 def serialize_request(model, request):
@@ -200,3 +201,49 @@ def collect_options(nbm, req):
         end_data.append(data_dict)
 
     return end_data
+
+
+# get baners
+def get_baner(key, id, request, def_data=None):
+    langs = Languages.objects.filter(active=True)
+    baner_data = {}
+
+    if langs.exists():
+        for lang in langs:
+            images = [it for it in request.session.get(f'{key}_{lang.code}') if str(it['id']) == str(id)]
+            if images:
+                image = images[0]
+                baner_data[lang.code] = image['name']
+
+                request.session.get(f'{key}_{lang.code}').remove(image)
+                request.session.modified = True
+            elif def_data:
+                baner_data[lang.code] = def_data.get(lang.code, '')
+
+    return baner_data
+
+
+
+# request itemto bool
+def boolize(item):
+    data = {'on': True, 'off': False}
+
+    return data.get(item)
+
+
+
+# serialize variant from request
+def serialize_variant(i, l, request):
+    exclude_list = ['product', 'images']
+    fileds = [it for it in ProductVariants._meta.fields if it.name not in exclude_list]
+    data_dict = {}
+
+    for field in fileds:
+        if field.get_internal_type() == 'BooleanField':
+            val = request.POST.get(f'{field.name}[{i}][{l}]', 'off')
+            data_dict[field.name] = boolize(val)
+        else:
+            val = request.POST.get(f'{field.name}[{i}][{l}]')
+            data_dict[field.name] = val
+
+    return data_dict

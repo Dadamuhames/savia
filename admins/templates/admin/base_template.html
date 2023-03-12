@@ -85,27 +85,6 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link collapsed" href="#sidebarPages" data-bs-toggle="collapse" role="button"
-                            aria-expanded="false" aria-controls="sidebarPages">
-                            <i class="fe fe-file"></i> Посты
-                        </a>
-                        <div class="collapse" id="sidebarPages">
-                            <ul class="nav nav-sm flex-column">
-                                <li class="nav-item">
-                                    <a href="{% url 'articles_list' %}" class="nav-link" role="button"
-                                        aria-expanded="false" aria-controls="sidebarPages">
-                                        Посты
-                                    </a>
-                                    <!--<a href="" class="nav-link" role="button"
-                                        aria-expanded="false" aria-controls="sidebarPages">
-                                        Категории постов
-                                    </a>-->
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-
-                    <li class="nav-item">
                         <a class="nav-link collapsed" href="#sidebarCotalog" data-bs-toggle="collapse" role="button" aria-expanded="false"
                             aria-controls="sidebarCotalog">
                             <i class="fe fe-shopping-cart"></i> Каталог
@@ -139,6 +118,11 @@
                     <li class="nav-item">
                         <a class="nav-link " href="{% url 'faq_list' %}">
                             <i class="fe fe-info"></i> F.A.Q
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="{% url 'baners_list' %}">
+                            <i class="fe fe-info"></i> Банеры
                         </a>
                     </li>
 

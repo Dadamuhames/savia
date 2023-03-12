@@ -4,16 +4,17 @@
 {% load cut_text %}
 {% load image_thumb %}
 
-{% block title %} Рецепты {% endblock %}
+{% block title %} Партнеры {% endblock %}
 
-{% block page_title %} Рецепты {% endblock %}
+
+{% block page_title %} Партнеры {% endblock %}
 
 {% block page_btn %}
 <div class="col-auto">
     <!-- Navigation (button group) -->
 
     <!-- Buttons -->
-    <a href="{% url 'recipe_create' %}" class="btn btn-primary ms-2">
+    <a href="{% url 'design_crate' %}" class="btn btn-primary ms-2">
         Добавить
     </a>
 
@@ -24,7 +25,7 @@
 <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
     <li class="breadcrumb-item active" aria-current="&quot;page&quot;">
-        Рецепты
+        Партнеры
     </li>
 </ol>
 {% endblock %}
@@ -68,10 +69,10 @@
                         <a class="list-sort text-muted">№</a>
                     </th>
                     <th>
-                        <a class="list-sort text-muted" data-sort="item-name">Заголовок</a>
+                        <a class="list-sort text-muted" data-sort="item-name">Название</a>
                     </th>
                     <th>
-                        <a class="list-sort text-muted" data-sort="item-name">Подзаголовок</a>
+                        <a class="list-sort text-muted" data-sort="item-name">Статус</a>
                     </th>
                     <th style="width: 200px;"></th>
                 </tr>
@@ -80,21 +81,31 @@
                 {% for obj, i in objects.pairs %}
                 <tr>
                     <td>
-                        <a class="item-title" href="{% url 'recipe_edit' obj.id %}">{{ i }}</a>
+                        <a class="item-title" href="{% url 'design_edit' obj.id %}">{{ i }}</a>
                     </td>
                     <td>
                         <p class="item-phone text-reset">
-                            {{ obj.title|get_item:lang.code|cut_text }}
+                        <div class="avatar avatar-lg align-middle me-2">
+                            {% if obj.image %}
+                            <img class="avatar-img rounded-circle"
+                                src='{% image_thumb obj.image alias="ten" request=request %}' alt="...">
+                            {% else %}
+                            <img class="avatar-img rounded-circle" src="{% static 'src/img/default.png' %}" alt="...">
+                            {% endif %}
+                        </div>
+                        {{ obj.title|get_item:lang.code|cut_text }}
                         </p>
                     </td>
                     <td>
-                        <p class="item-text text-reset">
-                            {{ obj.subtitle|get_item:lang.code|cut_text }}
-                        </p>
+                        {% if obj.active %}
+                            <span class="badge bg-success-soft">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger-soft">Inactive</span>
+                        {% endif %}
                     </td>
                     <td>
                         <div class="d-flex justify-content-end">
-                            <a href="{% url 'recipe_edit' obj.id %}" class="btn btn-sm btn-info"><i
+                            <a href="{% url 'design_edit' obj.id %}" class="btn btn-sm btn-info"><i
                                     class="fe fe-edit-2"></i></a>
                             <a class="btn btn-sm btn-danger ms-3"
                                 onclick="var result = confirm('Want to delete?');if (result){form_submit_in_table('delete-form{{ obj.id }}')}"><i
@@ -103,7 +114,7 @@
                                 style="display: none;">
                                 {% csrf_token %}
                                 <input type="hidden" name="item_id" value="{{ obj.id }}">
-                                <input type="hidden" name="model_name_del" value="Recipe">
+                                <input type="hidden" name="model_name_del" value="CustomDesigns">
                                 <input type="hidden" name="app_name_del" value="main">
                                 <input type="hidden" name="url" value="{{ request.get_full_path }}">
                             </div>

@@ -101,7 +101,6 @@ class ProductVariants(models.Model):
     slug = models.SlugField('Slug', editable=False, unique=True)
     options = models.ManyToManyField(AtributOptions, blank=True, null=True)
     images = models.ManyToManyField(ProducVariantImages, blank=True, null=True)
-    code = models.CharField('Code', max_length=255)
     top = models.BooleanField('Top', default=False)
     default = models.BooleanField("Default", default=False)
 
@@ -124,17 +123,20 @@ class ProductVariants(models.Model):
 
 # baners
 class Baners(models.Model):
-    baner = ThumbnailerImageField('Baner', upload_to='baners')
+    baner = models.JSONField('Baner', validators=[json_field_validate])
     link = models.URLField('Link', blank=True, null=True)
     active = models.BooleanField(default=True)
 
 
 # Newsletter
 class Newsletter(models.Model):
-    number = models.CharField("Number", max_length=255)
+    email = models.EmailField("Email")
     active = models.BooleanField(default=True)
 
 
-
-
+# custom designs
+class CustomDesigns(models.Model):
+    title = models.JSONField('Design name', validators=[json_field_validate])
+    image = ThumbnailerImageField(upload_to='design_images')
+    active = models.BooleanField(default=True)
 

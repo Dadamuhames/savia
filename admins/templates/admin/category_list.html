@@ -72,7 +72,7 @@
                         <a class="list-sort text-muted" data-sort="item-name">Название</a>
                     </th>
                     <th>
-                        <a class="list-sort text-muted" data-sort="item-name">Описание</a>
+                        <a class="list-sort text-muted" data-sort="item-name">Родительская категория</a>
                     </th>
                     <th>
                         <a class="list-sort text-muted" data-sort="item-name">Иконка</a>
@@ -100,7 +100,9 @@
                     </td>
                     <td>
                         <p class="item-text text-reset">
-                            {{ obj.deckription|get_item:lang.code|cut_text }}
+                            {% if obj.parent %}
+                            {{ obj.parent.name|get_item:lang.code|cut_text }}
+                            {% endif %}
                         </p>
                     </td>
                     <td>

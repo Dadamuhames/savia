@@ -30,7 +30,7 @@
 
 
 {% block content %}
-<form class="row" action="" method="POST" enctype="multipart/form-data">
+<form class="row" id="prod_form" {% if object %} action="{% url 'edit_product' object.id %}" {% else %} action="{% url 'create_product' %}" {% endif %} method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     <input type="hidden" name="variant_count" {% if not object %} value="1" {% else %} value="{{ object.variants.count }}" {% endif %}>
     <input type="hidden" name="dropzone-key" value="{{ dropzone_key }}">
@@ -74,15 +74,10 @@
                                 <br>
                                 <!-- Input -->
                                 <input type="text" {% if lang.default %} required {% endif %} name="name#{{ lang.code }}" class="form-control" 
-                                {% if object and object.name|get_item:lang.code %} value="{{ object.name|get_item:lang.code }}" 
-                                {% elif request_post and request_post|get_item:'name' %} value="{{ request_post|get_item:'name'|get_item:lang.code }}"
+                                {% if object and object.name|get_item:lang.code %} value="{{ object.name|get_item:lang.code }}"
                                 {% endif %}>
                                 {% if lang.default %}
-                                <div class="invalid-feedback" style="display: block;">
-                                    {% if errors.name %}
-                                    {{ errors.name|list_item:0 }}
-                                    {% endif %}
-                                </div>
+                                <div class="invalid-feedback" style="display: block;"></div>
                                 {% endif %}
                             </div>
                             <div class="form-group">
@@ -95,7 +90,6 @@
                                 <input type="text" name="subtitle#{{ lang.code }}" 
                                 {% if object and object.subtitle|get_item:lang.code %}
                                     value="{{ object.subtitle|get_item:lang.code }}"
-                                {% elif request_post and request_post|get_item:'subtitle' %} value="{{ request_post|get_item:'subtitle'|get_item:lang.code }}"
                                 {% endif %} class="form-control">
                             </div>
                             <div class="form-group">
@@ -106,38 +100,8 @@
                                 <br>
                                 <!-- Input -->
                                 <input type="text" name="type#{{ lang.code }}" {% if object and object.type %}
-                                value="{{ object.type|get_item:lang.code }}"
-                                {% elif request_post and request_post|get_item:'type' %} value="{{ request_post|get_item:'type'|get_item:lang.code }}" {% endif %}
+                                value="{{ object.type|get_item:lang.code }}" {% endif %}
                                 class="form-control">
-                            </div>
-                            <div class="form-group">
-                                <!-- Label -->
-                                <label class="form-label mb-1">
-                                    Состав
-                                </label>
-                                <br>
-                                <!-- Textarea -->
-                                <textarea class="editor" name="description#{{ lang.code }}" placeholder="Text">
-                                    {% if object and object.description|get_item:lang.code %} 
-                                        {{ object.description|get_item:lang.code }} 
-                                    {% elif request_post and request_post|get_item:'description' %}
-                                        {{ request_post|get_item:'description'|get_item:lang.code }}
-                                    {% endif %}</textarea>
-                            </div>
-                            <!-- Project description -->
-                            <div class="form-group">
-                                <!-- Label -->
-                                <label class="form-label mb-1">
-                                    Срок годности
-                                </label>
-                                <br>
-                                <!-- Textarea -->
-                                <textarea class="editor" name="bb_date#{{ lang.code }}" placeholder="Text">
-                                    {% if object and object.bb_date|get_item:lang.code %} 
-                                        {{ object.bb_date|get_item:lang.code }} 
-                                    {% elif request_post and request_post|get_item:'bb_date' %}
-                                        {{ request_post|get_item:'bb_date'|get_item:lang.code }}
-                                    {% endif %}</textarea>
                             </div>
                             <div class="col-12">
                                 <h2 class="">SEO теги</h2>
@@ -171,134 +135,45 @@
                     </label>
                     <br>
                     <!-- Input -->
-                    <select {% if object %} class="form-control ctg_select" {% else %} class="form-control" {% endif %} id="product_ctg_select" name="category" data-choices>
+                    <select required {% if object %} class="form-control ctg_select" {% else %} class="form-control" {% endif %} name="ctg" id="product_ctg_select" >
                         <option value="">-----</option>
-                        {% for ctg in relateds %}
-                            {% if object and ctg == object.category %}
-                                <option value="{{ ctg.id }}" selected>{{ ctg.name|get_item:lang.code }}</option>
-                            {% elif request_post and ctg.id == request_post|get_item:'category' %}
+                        {% for ctg in categories %}
+                            {% if object and ctg == object.category.parent %}
                                 <option value="{{ ctg.id }}" selected>{{ ctg.name|get_item:lang.code }}</option>
                             {% else %}
                                 <option value="{{ ctg.id }}">{{ ctg.name|get_item:lang.code }}</option>
                             {% endif %}
                         {% endfor %}
                     </select>
-                </div>
 
-                <div class="form-group">
-                    <!-- Label  -->
-                    <label class="form-label">
-                        Цена
-                    </label>
-                    <br>
-                    <!-- Input -->
-                    <input type="number" step="any" name="price" {% if object and object.price %}
-                        value="{{ object.price|to_string }}" {% elif request_post and request_post|get_item:'price' %}
-                        value="{{ request_post|get_item:'price'|to_string }}" {% endif %} class="form-control">
-                    
-                    {% if errors.price %}
-                    <div class="invalid-feedback" style="display: block;">
-                        {% for error in errors.price %}
-                        {{ error }}
-                        {% endfor %}
-                    </div>
-                    {% endif %}
+                    <div class="invalid-feedback" style="display: block;"></div>
                 </div>
-                <!-- Project cover -->
-                <div class="form-group">
                 
-                    <!-- Label  -->
-                    <label class="form-label mb-1">
-                        Фото
-                    </label>
-                
+                <span id="post_ctg_wrap">
                     {% if object %}
-                    <input type="hidden" id="id" value="{{ object.id }}">
-                    {% else %}
-                    <input type="hidden" id="id" value="None">
+                        <div class="form-group">
+                            <!-- Label  -->
+                            <label class="form-label">
+                                Пост категория
+                            </label>
+                            <br>
+                            <!-- Input -->
+                            <select name="category" class="form-control ctg_select product_ctg_select" id="post_ctg" class="form-control"
+                                name="category" data-choices>
+                                <option value="">-----</option>
+                                {% for ctg in object.category.parent.children.all %}
+                                    <option value="{{ ctg.id }}" {% if object.category == ctg %} selected {% endif %}>{{ ctg.name|get_item:lang.code }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     {% endif %}
-                
-                    <!-- Dropzone -->
-                    <div class="dropzone dropzone-multiple border-0" data-max="1" data-delete="/admin/images/delete"
-                        data-url="/admin/images/save" data-key="{{ dropzone_key }}">
-                        <!-- Fallback -->
-                        <div class="dz-preview d-none"></div>
-                        <div class="fallback">
-                            <div class="custom-file">
-                                <input type="file" name="file" class="form-control" id="customFileUploadMultiple">
-                                <label class="form-label" for="customFileUploadMultiple">Choose file</label>
-                            </div>
-                        </div>
-                
-                        <!-- Preview -->
-                        <div class="dz-preview-container" id="article-image" style="padding: 0;">
-                            {% if object %}
-                            <div class="dz-preview dz-processing dz-complete dz-image-preview d-none"
-                                style="position: relative; margin: 0;">
-                                <div class="dz-image">
-                                    <img data-dz-thumbnail="" src="" alt="">
-                                </div>
-                                <div class="dz-details">
-                                    <div class="dz-filename"><span data-dz-name=""></span></div>
-                                </div>
-                                <a class="dz-remove" data-file="" data-dz-remove>Удалить</a>
-                            </div>
-                            {% if object.image %}
-                            <div class="dz-preview dz-processing dz-complete dz-image-preview" style="position: relative;">
-                                <div class="dz-image">
-                                    <img data-dz-thumbnail="" src='{% image_thumb object.image alias="ten" request=request %}'
-                                        alt="{{ object.image }}">
-                                </div>
-                                <div class="dz-details">
-                                    <div class="dz-filename"><span data-dz-name="">{{ object.image }}</span></div>
-                                </div>
-                                <a class="dz-remove"
-                                    onclick="var result = confirm('Want to delete?');if (result){submit_form('delete-form{{ object.id }}')}"
-                                    data-dz-remove>Удалить</a>
-                                <div action="{% url 'del_prod_img' %}" id="delete-form{{ object.id }}" method="post">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="item_id" value="{{ object.id }}">
-                                </div>
-                            </div>
-                            {% endif %}
-                            {% else %}
-                            {% for img in images %}
-                            <div class="dz-preview dz-processing dz-complete dz-image-preview">
-                                <div class="dz-image">
-                                    <img data-dz-thumbnail="" src="/media/{{ img.name }}" alt="{{ img.name }}">
-                                </div>
-                                <div class="dz-details">
-                                    <div class="dz-filename"><span data-dz-name="">{{ img.name }}</span></div>
-                                </div>
-                                <a class="dz-remove" data-file="{{ img }}"
-                                    onclick="var result = confirm('Want to delete?');if (result){submit_form('delete-form{{ img.id }}')}"
-                                    data-dz-remove>Удалить</a>
-                                <div action="{% url 'del-img' %}" id="delete-form{{ img.id }}" method="post">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="url" value="{{ request.get_full_path }}">
-                                    <input type="hidden" name="key" value="{{ dropzone_key }}">
-                                    <input type="hidden" name="file" value="{{ img.name }}">
-                                </div>
-                            </div>
-                            {% endfor %}
-                            {% endif %}
-                        </div>
-                
-                    </div>
-                </div>
+                </span>
 
                 <div class="row">
                     <div class="col-6">
                         <div class="form-check form-switch">
                             <input type="checkbox" name="active" class="form-check-input" id="id_active" {% if object.active or object is None %} checked {% endif %}>
                             <label class="form-check-label" for="flexSwitchCheckDefault">Active</label>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="form-check form-switch">
-                            <input type="checkbox" name="main" class="form-check-input" id="id_main" 
-                            {% if object.main %} checked {% endif %}>
-                            <label class="form-check-label" for="flexSwitchCheckDefault">Main</label>
                         </div>
                     </div>
                 </div>
@@ -324,6 +199,7 @@
         CKEDITOR.replace(txt)
     }
 </script>
+<script src="{% static 'assets/js/product_form.js' %}"></script>
 
 <!-- Map JS -->
 

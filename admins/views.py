@@ -1,14 +1,12 @@
 from django.shortcuts import render, redirect
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, FormView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, FormView, TemplateView
 from .models import Articles, Languages, Translations, TranlsationGroups, StaticInformation, ArticleCategories, FAQ
 from .models import MetaTags, telephone_validator
-from main.models import Products, Category, AtributOptions, Atributs, Colors
+from main.models import Products, Category, AtributOptions, Atributs, Colors, Baners, ProducVariantImages, CustomDesigns
 from order.models import ShortApplication
 from .forms import LngForm, UserForm  # , ApplicationForm
 from django.core.exceptions import ValidationError
-import datetime
 from django.db.models import Q
-import json
 from django.apps import apps
 from django.http import JsonResponse, QueryDict, HttpResponseRedirect
 from django.core.files.storage import default_storage
@@ -16,6 +14,10 @@ from .utils import *
 from .serializers import TranslationSerializer
 from django.contrib.auth.models import User
 from django.contrib.auth import logout
+import os
+from django.conf import settings
+from django.db import transaction
+from main.serializers import CategorySimpleSerializer, AtributSerializer
 # Create your views here.
 
 
@@ -66,6 +68,17 @@ class BasedCreateView(CreateView):
     image_field = None
     meta = False
 
+
+    def get(self, request, *args, **kwargs):
+        key = self.model._meta.verbose_name
+
+        for it in list(self.request.session.get(key, [])):
+            if it['id'] == '':
+                self.request.session[key].remove(it)
+                self.request.session.modified = True
+
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super(BasedCreateView, self).get_context_data(**kwargs)
         context['langs'] = Languages.objects.filter(
@@ -76,11 +89,6 @@ class BasedCreateView(CreateView):
             context['relateds'] = self.related_model.objects.order_by('-id')
 
         context['dropzone_key'] = self.model._meta.verbose_name
-        context['images'] = []
-
-        if self.request.session.get(context['dropzone_key']):
-            context['images'] = list({'name': it['name'], 'id': clean_text(
-                it['name'])} for it in self.request.session[context['dropzone_key']] if it['id'] == '')
 
         return context
 
@@ -110,7 +118,7 @@ class BasedCreateView(CreateView):
         try:
             article = self.model(**data_dict)
             article.full_clean()
-            article = self.form_valid(article)
+            article = self.form_isvalid(article)
         except ValidationError as e:
             data['request_post'] = data_dict
             print(data)
@@ -118,10 +126,15 @@ class BasedCreateView(CreateView):
             return self.form_error(data, e.message_dict)
 
         return redirect(self.success_url)
-
+    
     def form_valid(self, form):
-        form.save()
+        return None
+    
+    def form_invalid(self, form):
+        return None
 
+    def form_isvalid(self, form):
+        form.save()
         if self.meta:
             meta_dict = serialize_request(MetaTags, self.request)
             try:
@@ -170,7 +183,7 @@ class BasedUpdateView(UpdateView):
         if self.image_field:
             key = self.model._meta.verbose_name
             try:
-                file = [it for it in self.request.session.get(key, []) if it['id'] == str(self.get_object().pk)][0]
+                file = [it for it in self.request.session.get(key, []) if it['id'] == str(self.get_object().id)][0]
             except:
                 file = None
 
@@ -180,6 +193,8 @@ class BasedUpdateView(UpdateView):
                     if it['id'] == str(self.get_object().pk):
                         self.request.session.get(key).remove(it)
                         self.request.session.modified = True
+
+        print(data_dict)
 
         return data_dict
 
@@ -193,7 +208,7 @@ class BasedUpdateView(UpdateView):
             for attr, value in data_dict.items():
                 setattr(instance, attr, value)
             instance.full_clean()
-            instance = self.form_valid(instance)
+            instance = self.form_isvalid(instance)
         except ValidationError as e:
             data['request_post'] = data_dict
             print(data)
@@ -204,6 +219,13 @@ class BasedUpdateView(UpdateView):
 
 
     def form_valid(self, form):
+        return None
+
+    def form_invalid(self, form):
+        return None
+
+
+    def form_isvalid(self, form):
         form.save()
 
         if self.meta:
@@ -360,64 +382,6 @@ def delete_image(request):
                     request.session.modified = True
 
     return redirect(request.META.get("HTTP_REFERER"))
-
-
-# articles create
-class ArticleCreateView(BasedCreateView):
-    model = Articles
-    template_name = 'admin/new_article.html'
-    success_url = 'articles_list'
-    related_model = ArticleCategories
-    image_field = 'image'
-    meta = True
-
-    def get_request_data(self):
-        data_dict = super().get_request_data()
-        data_dict['created_date'] = data_dict.get('created_date', str(datetime.date.today()))
-        data_dict['author'] = self.request.user
-
-        return data_dict
-
-    def form_valid(self, form):
-        article = super().form_valid(form)
-
-        categories = self.request.POST.getlist('categories[]')
-        if categories:
-            ctg_queryset = [ArticleCategories.objects.get(
-                id=int(it)) for it in categories]
-
-            article.category.set(ctg_queryset)
-
-        article.save()
-
-        return article
-
-
-# articles list
-class ArticlesList(BasedListView):
-    model = Articles
-    template_name = 'admin/articles_list.html'
-    search_fields = ['title', 'body']
-
-
-# article update
-class ArticleUpdate(BasedUpdateView):
-    model = Articles
-    template_name = 'admin/new_article.html'
-    success_url = 'articles_list'
-    fields = '__all__'
-    meta = True
-    related_model = ArticleCategories
-
-    def form_valid(self, form):
-        instance = super().form_valid(form)
-        categories = self.request.POST.getlist('categories[]')
-        if categories:
-            ctg_queryset = [ArticleCategories.objects.get(
-                id=int(it)) for it in categories]
-            instance.category.set(ctg_queryset)
-
-        return instance
 
 # langs list
 class LangsList(ListView):
@@ -749,56 +713,6 @@ class TranslationGroupUdpate(UpdateView):
 
         return redirect('transl_group_detail', pk=self.get_object().id)
 
-
-# article ctg list
-class ArticleCtgList(BasedListView):
-    model = ArticleCategories
-    template_name = 'admin/article_ctg.lst.html'
-    search_fields = ['name']
-
-
-# add article ctg
-class AddArticleCtg(BasedCreateView):
-    model = ArticleCategories
-    template_name = 'admin/article_ctg_form.html'
-    fields = '__all__'
-    success_url = 'article_ctg_list'
-    related_model = ArticleCategories
-    image_field = 'image'
-
-    def get_request_data(self):
-        data_dict = super().get_request_data()
-        try:
-            data_dict['parent'] = ArticleCategories.objects.get(
-                id=int(data_dict.get('parent')))
-        except:
-            if data_dict.get("parent"):
-                del data_dict['parent']
-
-        return data_dict
-
-
-# article ctg edit
-class ArticleCtgEdit(BasedUpdateView):
-    model = ArticleCategories
-    fields = "__all__"
-    template_name = 'admin/article_ctg_form.html'
-    success_url = 'article_ctg_list'
-    image_field = 'image'
-
-    def get_request_data(self):
-        data_dict = super().get_request_data()
-
-        try:
-            data_dict['parent'] = ArticleCategories.objects.get(
-                id=int(data_dict.get('parent')))
-        except:
-            if data_dict.get("parent"):
-                del data_dict['parent']
-
-        return data_dict
-
-
 # super users list
 class AdminsList(BasedListView):
     model = User
@@ -987,8 +901,8 @@ class CategoryCreate(BasedCreateView):
         return data_dict
 
 
-    def form_valid(self, form):
-        instance = super().form_valid(form)
+    def form_isvalid(self, form):
+        instance = super().form_isvalid(form)
 
         atributs_ids = self.request.POST.getlist('atributs[]') 
         if atributs_ids:
@@ -1071,8 +985,8 @@ class CategoryEdit(BasedUpdateView):
         return data_dict
 
 
-    def form_valid(self, form):
-        instance = super().form_valid(form)
+    def form_isvalid(self, form):
+        instance = super().form_isvalid(form)
 
         atributs_ids = self.request.POST.getlist('atributs[]')
         if atributs_ids:
@@ -1117,50 +1031,6 @@ class ProductsList(BasedListView):
     search_fields = ['name']
     template_name = 'admin/products.html'
 
-
-# products create
-class ProductsCreate(BasedCreateView):
-    model = Products
-    fields = '__all__'
-    template_name = 'admin/products_form.html'
-    related_model = Category
-    image_field = 'image'
-    success_url = 'products_list'
-    meta = True
-    
-    def get_request_data(self):
-        data_dict = super().get_request_data()
-        category_id = self.request.POST.get('category', 0)
-        try:
-            category = Category.objects.get(id=int(category_id))
-            data_dict['category'] = category
-        except:
-            pass
-
-        return data_dict
-
-
-
-# products edit
-class ProductEdit(BasedUpdateView):
-    model = Products
-    fields = '__all__'
-    template_name = 'admin/products_form.html'
-    related_model = Category
-    image_field = 'image'
-    success_url = 'products_list'
-    meta = True
-
-    def get_request_data(self):
-        data_dict = super().get_request_data()
-        category_id = self.request.POST.get('category', 0)
-        try:
-            category = Category.objects.get(id=int(category_id))
-            data_dict['category'] = category
-        except:
-            pass
-
-        return data_dict
 
 # faq list
 class FAQlist(BasedListView):
@@ -1463,3 +1333,377 @@ class ColorEdit(BasedUpdateView):
     model = Colors
     success_url = 'color_list'
     template_name = 'admin/colors_form.html'
+
+
+
+# baners list
+class BanersList(BasedListView):
+    model = Baners
+    template_name = 'admin/baners.html'
+
+
+# baner create
+class BanerCreate(BasedCreateView):
+    model = Baners
+    template_name = 'admin/baners_form.html'
+    success_url = 'baners_list'
+
+    def get_request_data(self):
+        data_dict = super().get_request_data()
+        key = self.model._meta.verbose_name
+        del data_dict['baner']
+        data_dict['baner'] = get_baner(key, '', self.request)
+
+        print(data_dict)
+        return data_dict
+    
+    
+    def form_isvalid(self, form):
+        obj = super().form_isvalid(form)
+
+        print(obj)
+        return obj
+
+
+# baners edit
+class BanerEdit(BasedUpdateView):
+    model = Baners
+    template_name = 'admin/baners_form.html'
+    success_url = 'baners_list'
+
+    def get_request_data(self):
+        data_dict = super().get_request_data()
+        key = self.model._meta.verbose_name
+        id = self.get_object().id
+        baners = data_dict.pop('baner')
+
+        inst_baners = self.get_object().baner
+
+        data_dict['baner'] = get_baner(key, id, self.request, def_data=inst_baners)
+        return data_dict
+
+
+
+# delete_baner_img
+def delete_baner_img(request):
+    id = request.POST.get("obj_id")
+    lang = request.POST.get("lang")
+
+    try:
+        baner = Baners.objects.get(id=int(id))
+        baner_img = dict(baner.baner)
+        img = baner_img.pop(lang)
+        baner_img[lang] = ''
+        file = os.path.join(img)
+        default_storage.delete(file)
+        print(baner_img)
+        baner.baner = baner_img
+        baner.save()
+    except TypeError as e:
+        print(e)
+
+    return JsonResponse("success", safe=False)
+
+
+def get_product_data(req):
+    data_dict = serialize_request(Products, req)
+    category_id = req.POST.get('category', 0)
+    try:
+        category = Category.objects.get(id=int(category_id))
+        data_dict['category'] = category
+    except:
+        pass
+
+    return data_dict
+
+
+# product creat
+@transaction.atomic
+def create_product(request):
+    if request.method == 'POST':
+        lang = Languages.objects.filter(active=True).filter(default=True).first()
+
+        # product save and validate
+        data_dict = get_product_data(request)
+
+        errors = {}
+
+        try:
+            product = Products(**data_dict)
+            product.full_clean()
+            product.save()
+        except ValidationError as e:
+            errors['product'] = e.message_dict
+        
+
+        # product variant save
+        item_count = request.POST.get('item_count', 0)
+
+
+        for i in range(1, int(item_count) + 1):
+            sub_items_count = request.POST.get(f"sub_item_cout[{i}]")
+
+            # save variant images
+            images = []
+            files = request.POST.getlist(f'images[{i}]', [])
+
+            for file in files:
+                try:
+                    image = ProducVariantImages(image=file)
+                    image.full_clean()
+                    image.save()
+                    images.append(image)
+                except ValidationError as e:
+                    errors[f'images[{i}]'] = e.message_dict
+
+
+            for l in range(1, int(sub_items_count) + 1):
+                variant_data = serialize_variant(i, l, request)
+                variant_data['product'] = product
+
+                try:
+                    variant = ProductVariants(**variant_data)
+                    variant.full_clean()
+                    variant.save()
+
+                    variant.images.set(images)
+                except ValidationError as e:
+                    errors[f'variant[{i}][{l}]'] = e.message_dict
+
+        if errors:
+            print(errors)
+            errors['lang'] = lang.code
+            return JsonResponse(status=403, data=errors)
+        else:
+            return JsonResponse("success", safe=False)
+        
+
+
+# product create form view
+class ProductCreateView(TemplateView):
+    model = Products
+    template_name = 'admin/products_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ProductCreateView, self).get_context_data(**kwargs)
+
+        context['categories'] = Category.objects.filter(parent=None)
+        context['langs'] = Languages.objects.filter(active=True)
+        context['lang'] = context['langs'].filter(default=True).first()
+
+        return context
+
+
+
+# products edit view
+class ProductEditView(DetailView):
+    model = Products
+    template_name = 'admin/products_form.html' 
+    
+
+    def get_context_data(self, **kwargs):
+        context = super(ProductEditView, self).get_context_data(**kwargs)
+        instance = self.get_object()
+        variants = instance.variants.all()
+        langs = Languages.objects.filter(active=True)
+        lang = langs.filter(default=True)
+
+        if lang.exists():
+            lang = langs.first()
+        
+        
+        colors = set([it.color for it in variants])
+    
+        variants_dict = {}
+
+        for color in colors:
+            vars = variants.filter(color=color)
+            variants_dict[color.id] = vars
+
+        
+        context['langs'] = langs
+        context['lang'] = lang
+        context['colors'] = colors
+        context['variants'] = variants_dict
+        context['categories'] = Category.objects.filter(parent=None)
+
+        print(variants_dict)
+
+        return context
+                
+
+# get post ctg
+def get_post_ctg(request):
+    id = request.GET.get('id', 0)
+
+    try:
+        category = Category.objects.filter(parent=None).get(id=int(id))
+
+        data = {}
+        data['categories'] = CategorySimpleSerializer(category.children.all(), many=True, context={'request': request}).data
+            #data['atributs'] = AtributSerializer(category.atributs.all(), many=True, context={'request': request}).data
+
+        return JsonResponse(data)
+    except:
+        return JsonResponse("error", safe=False)
+                
+
+# get  post_ctg atributs
+def get_atributs(request):
+    id = request.GET.get('id', 0)
+
+    try:
+        category = Category.objects.exclude(parent=None).get(id=int(id))
+        
+        atributs = set()
+
+        for atr in category.atributs.all():
+            atributs.add(atr)
+
+        for atr in category.parent.atributs.all():
+            atributs.add(atr)
+
+        atributs = AtributSerializer(atributs, many=True, context={'request': request}).data
+
+        return JsonResponse({'atributs':atributs})
+    except:
+        return JsonResponse("error", safe=False)
+
+
+
+# edit product
+@transaction.atomic
+def edit_product(request, pk):     
+    queryset = Products.objects.all()
+
+    try:
+        instance = queryset.get(id=int(pk))
+    except:
+        return JsonResponse(status=404, data={'error': 'Product not found'})
+
+    if request.method == 'POST':
+        lang = Languages.objects.filter(active=True).filter(default=True).first()
+        data_dict = get_product_data(request)
+
+        errors = {}
+
+        try:
+            for attr, value in data_dict.items():
+                setattr(instance, attr, value)
+            instance.full_clean()
+            instance.save()
+        except ValidationError as e:
+            errors['product'] = e.message_dict
+
+        # product variant save
+        variants = instance.variants.all()
+        item_count = request.POST.get('item_count', 0)
+        colors = set([it.color for it in variants])
+        old_count_by_color = len(colors)
+
+        for i in range(1, old_count_by_color+1):
+            sub_items_count = request.POST.get(f"sub_item_cout[{i}]")
+            color = colors[i-1]
+            old_sub_items_count = variants.filter(color=color).count()
+
+            # save variant images
+            images = []
+            files = request.POST.getlist(f'images[{i}]', [])
+
+            for file in files:
+                try:
+                    image = ProducVariantImages(image=file)
+                    image.full_clean()
+                    image.save()
+                    images.append(image)
+                except ValidationError as e:
+                    errors[f'images[{i}]'] = e.message_dict
+
+            # edit old sub variants
+            for l in range(1, int(old_sub_items_count) + 1):
+                variant = variants[l-1]
+                variant_data = serialize_variant(i, l, request)
+
+                try:
+                    for attr, value in variant_data.items():
+                        setattr(variant, attr, value)
+                    variant.full_clean()
+                    variant.save()
+                    variant.images.add(images)
+                except ValidationError as e:
+                    errors[f'variant[{i}][{l}]'] = e.message_dict
+
+            # add new subvariants
+            for j in range(int(old_sub_items_count) + 1, int(sub_items_count)):
+                variant_data = serialize_variant(i, j, request)
+                variant_data['product'] = instance
+
+                try:
+                    variant = ProductVariants(**variant_data)
+                    variant.full_clean()
+                    variant.save()
+                    variant.images.set(images)
+                except ValidationError as e:
+                    errors[f'variant[{i}][{j}]'] = e.message_dict
+
+
+        # add new variants
+        for t in range(old_count_by_color+1, int(item_count) + 1):
+            sub_items_count = request.POST.get(f"sub_item_cout[{t}]")
+
+            # save variant images
+            images = []
+            files = request.POST.getlist(f'images[{t}]', [])
+
+            for file in files:
+                try:
+                    image = ProducVariantImages(image=file)
+                    image.full_clean()
+                    image.save()
+                    images.append(image)
+                except ValidationError as e:
+                    errors[f'images[{t}]'] = e.message_dict
+
+            for k in range(1, int(sub_items_count) + 1):
+                variant_data = serialize_variant(t, k, request)
+                variant_data['product'] = instance
+
+                try:
+                    variant = ProductVariants(**variant_data)
+                    variant.full_clean()
+                    variant.save()
+
+                    variant.images.set(images)
+                except ValidationError as e:
+                    errors[f'variant[{t}][{k}]'] = e.message_dict
+
+        if errors:
+            errors['lang'] = lang.code
+            return JsonResponse(status=403, data=errors)
+        else:
+            return JsonResponse("success", safe=False)
+
+# custom designs
+class DesignsList(BasedListView):
+    model = CustomDesigns
+    template_name = 'admin/designs.html'
+    search_fields = ['title']
+
+
+# create design page
+class CustomDesignCreate(BasedCreateView):
+    model = CustomDesigns
+    template_name = 'admin/design_form.html'
+    success_url = 'designs_list'
+    
+
+# custom desing edit
+class CustomDesignEdit(BasedUpdateView):
+    model = CustomDesigns
+    template_name = 'admin/design_form.html'
+    success_url = 'designs_list'
+
+
+# delete desing image
+def del_design_image(request):
+    pass    

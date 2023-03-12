@@ -11,10 +11,12 @@ urlpatterns = [
     path('categories', views.CategoryList.as_view()),
     path("categories/<int:pk>", views.CategoryDetailView.as_view()),
     path('products', views.ProductsList.as_view()),
+    path('products/<slug:slug>', views.ProductDetail.as_view()),
     path("top_products", views.TopProducts.as_view()),
     path("cart_view", views.CartView.as_view()),
     path("faq", views.FAQview.as_view()),
     path("search", views.Search.as_view()),
     path("baners", views.BanersView.as_view()),
-    path("subscribe", views.AddNewslatter.as_view())
+    path("subscribe", views.AddNewslatter.as_view()),
+    path("custom_designs", views.DesignsListView.as_view())
 ]

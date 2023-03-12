@@ -1,4 +1,4 @@
-from .models import Products, Category, AtributOptions, Atributs, Colors, ProductVariants, ProducVariantImages, Baners, Newsletter
+from .models import Products, Category, AtributOptions, Atributs, Colors, ProductVariants, ProducVariantImages, Baners, Newsletter, CustomDesigns
 from admins.models import Languages
 from rest_framework import serializers
 from django.conf import settings
@@ -18,16 +18,16 @@ class ThumbnailSerializer(serializers.BaseSerializer):
         if alias is None:
             return None
 
-        size = alias.get('size')[0]
+        size = alias.get('size')
         url = None
 
         if instance:
             orig_url = instance.path.split('.')
-            thb_url = '.'.join(orig_url) + f'.{size}x{size}_q85.{orig_url[-1]}'
+            thb_url = '.'.join(orig_url) + f'.{size[0]}x{size[1]}_q85.{orig_url[-1]}'
             if default_storage.exists(thb_url):
                 print("if")
                 last_url = instance.url.split('.')
-                url = '.'.join(last_url) + f'.{size}x{size}_q85.{last_url[-1]}'
+                url = '.'.join(last_url) + f'.{size[0]}x{size[1]}_q85.{last_url[-1]}'
             else:
                 print('else')
                 url = get_thumbnailer(instance)[self.alias].url
@@ -300,10 +300,17 @@ class ProductVariantImagesSerializer(serializers.ModelSerializer):
 class ProductVariantDetailSerializer(ProductVariantSimpleSerializer):
     product = ProductsSerializer()
     images = ProductVariantImagesSerializer(many=True)
+
+
+    class Meta:
+        model = ProductVariants
+        fields = '__all__'
+
     
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['atributs'] = []
+        context = {'request': self.context.get("request")}
 
         variants = instance.product.variants.all()                        
         atributs = []
@@ -313,9 +320,8 @@ class ProductVariantDetailSerializer(ProductVariantSimpleSerializer):
         for atr in instance.product.category.parent.atributs.all():
             atributs.append(atr)
 
-
         for atr in atributs:
-            atr_data = AtributSerializer(atr).data
+            atr_data = AtributSerializer(atr, context=context).data
             options = atr_data['options']
             
             opt_lst = [it for it in instance.options.all()]
@@ -326,7 +332,7 @@ class ProductVariantDetailSerializer(ProductVariantSimpleSerializer):
 
             for opt in options:
                 lst = opt_lst.copy()
-                opshn = AtributOptions.objects.get(id=opt['id'])             
+                opshn = AtributOptions.objects.get(id=int(opt['id']))             
                 lst.append(opshn)
                 id_lst = [it.id for it in lst]
                 
@@ -337,24 +343,102 @@ class ProductVariantDetailSerializer(ProductVariantSimpleSerializer):
                 if not variant.exists(): 
                     opt['variant'] = None
                 else:
-                    opt['variant'] = variant.first().id
+                    opt['variant'] = variant.first().slug
+
+                
+                
 
             data['atributs'].append(atr_data)
+
+        colors = set()
+
+        for var in variants:
+            colors.add(var.color)
+
+        data['colors'] = []
+
+        for color in colors:
+            serializer = ColorSerializer(color, context=context).data
+            variant = variants.filter(color=color)
+
+            for opt in instance.options.all():
+                variant = variant.filter(options=opt)
+
+            if variant.count() == 0:
+                serializer['variant'] = None
+            else:
+                serializer['variant'] = variant.first().slug
+
+            data['colors'].append(serializer)
 
 
         return data
     
+
+# baner image serializer
+class BanerImageSerializer(ThumbnailSerializer):
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        alias = settings.THUMBNAIL_ALIASES.get('').get(self.alias)
+        if alias is None:
+            return None
+
+        size = alias.get('size')
+        url = None
+
+        if instance and default_storage.exists(instance):
+            open_url = default_storage.open(instance).name
+            orig_url = open_url.split('.')
+            thb_url = '.'.join(orig_url) + \
+                f'.{size[0]}x{size[1]}_q85.{orig_url[-1]}'
+            if default_storage.exists(thb_url):
+                url = thb_url
+            else:
+                url = get_thumbnailer(open_url)[self.alias]
+        else:
+            return '/static/src/img/default.png'
+
+        if url == '' or url is None:
+            return None
+
+        if request is not None:
+            final_url = '/media/' + str(url).split('\media\\')[-1].replace('\\', "/")
+            return request.build_absolute_uri(final_url)
+
+        return url
 
 
 # baner
 class BanerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Baners
-        fields = '__all__'
+        exclude = ['baner', 'active']
+
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        context = {'request': self.context.get('request')}
+        
+        img_path = JsonFieldSerializer(instance.baner, context=context).data
+        data['image'] = BanerImageSerializer(alias='original', instance=img_path, context=context).data
+
+        return data
 
 
 # newslatters
 class NewsletterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Newsletter
+        fields = '__all__'
+
+
+
+
+# custon design serializer
+class CustomDesighSerializer(serializers.ModelSerializer):
+    title = JsonFieldSerializer()
+    image = ThumbnailSerializer(alias='prod_photo')
+
+    class Meta:
+        model = CustomDesigns
         fields = '__all__'
