@@ -210,7 +210,7 @@ def get_baner(key, id, request, def_data=None):
 
     if langs.exists():
         for lang in langs:
-            images = [it for it in request.session.get(f'{key}_{lang.code}') if str(it['id']) == str(id)]
+            images = [it for it in request.session.get(f'{key}_{lang.code}', []) if str(it['id']) == str(id)]
             if images:
                 image = images[0]
                 baner_data[lang.code] = image['name']
