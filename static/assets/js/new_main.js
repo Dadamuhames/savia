@@ -70,6 +70,7 @@ $('.dropzone').each((i, e) => {
     var myDropzone = new Dropzone(e, {
         url: $(e).attr("data-url"),
         parallelUploads: 1,
+        acceptedFiles: 'image/*',
         maxFiles: $('.dropzone').attr('data-max'),
         params: {
             "csrfmiddlewaretoken": document.querySelector('input[name="csrfmiddlewaretoken"]').value,
@@ -80,9 +81,9 @@ $('.dropzone').each((i, e) => {
         previewsContainer: `#${$(e).find('.dz-preview-container').attr('id')}`,
         success: (file, response) => {
             var removeButton = Dropzone.createElement(`<a class="dz-remove" data-dz-remove>Удалить</a>`);
-            removeButton.addEventListener("click", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
+            removeButton.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
                 myDropzone.removeFile(file);
 
                 data = {}
