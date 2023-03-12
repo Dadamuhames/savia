@@ -1440,7 +1440,6 @@ def delete_baner_img(request):
         baner_img[lang] = ''
         file = os.path.join(img)
         default_storage.delete(file)
-        print(baner_img)
         baner.baner = baner_img
         baner.save()
     except TypeError as e:
@@ -1739,6 +1738,7 @@ class CustomDesignCreate(BasedCreateView):
     model = CustomDesigns
     template_name = 'admin/design_form.html'
     success_url = 'designs_list'
+    image_field = 'image'
     
 
 # custom desing edit
@@ -1746,8 +1746,18 @@ class CustomDesignEdit(BasedUpdateView):
     model = CustomDesigns
     template_name = 'admin/design_form.html'
     success_url = 'designs_list'
+    image_field = 'image'
 
 
 # delete desing image
 def del_design_image(request):
-    pass    
+    id = request.POST.get("obj_id")
+
+    try:
+        dsgn = CustomDesigns.objects.get(id=int(id))
+        dsgn.image.delete()
+        dsgn.save()
+    except TypeError as e:
+        print(e)
+
+    return JsonResponse("success", safe=False)

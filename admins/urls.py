@@ -64,5 +64,6 @@ urlpatterns = [
      path('products/<int:pk>/edit/post', views.edit_product, name='edit_product'),
      path('designs', views.DesignsList.as_view(), name='designs_list'),
      path('designs/create', views.CustomDesignCreate.as_view(), name='design_crate'),
-     path('designs/<int:pk>/edit', views.CustomDesignEdit.as_view(), name='design_edit')
+     path('designs/<int:pk>/edit', views.CustomDesignEdit.as_view(), name='design_edit'),
+    path('designs/image/delete', views.del_design_image, name='design_img_delete')
 ]

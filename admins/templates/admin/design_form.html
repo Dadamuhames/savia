@@ -136,7 +136,7 @@
                                         <a class="dz-remove" data-file="{{ img.id }}"
                                             onclick="var result = confirm('Want to delete?');if (result){submit_form('delete-form')}"
                                             data-dz-remove>Удалить</a>
-                                        <div action="{% url 'del_partner_img' %}" id="delete-form" method="post">
+                                        <div action="{% url 'design_img_delete' %}" id="delete-form" method="post">
                                             {% csrf_token %}
                                             <input type="hidden" name="url" value="{{ request.get_full_path }}">
                                             <input type="hidden" name="obj_id" value="{{ object.id }}">
