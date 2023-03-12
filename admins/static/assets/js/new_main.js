@@ -88,7 +88,7 @@ $('.dropzone').each((i, e) => {
 
                 data = {}
                 data["csrfmiddlewaretoken"] = $('input[name="csrfmiddlewaretoken"]').val()
-                data['key'] = $('input[name="dropzone-key"]').val()
+                data['key'] = $(e).attr('data-key')
                 data['file'] = response
 
                 $.ajax({

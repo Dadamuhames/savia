@@ -10,6 +10,7 @@ import re
 from django.core.files.storage import default_storage
 from main.models import ProductVariants
 
+
 # get request.data in JSON
 def serialize_request(model, request):
     langs = Languages.objects.filter(active=True)
@@ -215,17 +216,18 @@ def get_baner(key, id, request, def_data=None):
             if files:
                 images = [it for it in list(files) if str(it['id']) == str(id)]
                 image = images[0]
+                images.remove(image)
+                
+                request.session.get(f'{key}_{lang.code}').remove(image)
+                request.session.modified = True
+                
                 baner_data[lang.code] = image['name']
-
                 for it in images:
+                    default_storage.delete(it['name'])
                     request.session.get(f'{key}_{lang.code}').remove(it)
                     request.session.modified = True
             elif def_data:
                 baner_data[lang.code] = def_data.get(lang.code, '')
-
-        
-
-
 
     return baner_data
 
@@ -254,3 +256,21 @@ def serialize_variant(i, l, request):
             data_dict[field.name] = val
 
     return data_dict
+
+
+
+# pre delete ctg images
+def predelete_image(keys, request, id):
+    for key in keys:
+        files = request.session.get(key)
+
+        if files:
+            for it in list(files):
+                if it['id'] == str(id):
+                    if default_storage.exists(it['name']):
+                        default_storage.delete(it['name'])
+
+                    request.session[key].remove(it)
+                    request.session.modified = True
+
+    

@@ -71,18 +71,22 @@ class BasedCreateView(CreateView):
 
     def get(self, request, *args, **kwargs):
         key = self.model._meta.verbose_name
+        files = self.request.session.get(key)
 
-        for it in list(self.request.session.get(key, [])):
-            if it['id'] == '':
-                self.request.session[key].remove(it)
-                self.request.session.modified = True
+        if files:
+            for it in list(files):
+                if it['id'] == '':
+                    if default_storage.exists(it['name']):
+                        default_storage.delete(it['name'])
+
+                    self.request.session[key].remove(it)
+                    self.request.session.modified = True
 
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(BasedCreateView, self).get_context_data(**kwargs)
-        context['langs'] = Languages.objects.filter(
-            active=True).order_by('-default')
+        context['langs'] = Languages.objects.filter(active=True).order_by('-default')
         context['lang'] = Languages.objects.filter(default=True).first()
 
         if self.related_model is not None:
@@ -164,6 +168,27 @@ class BasedUpdateView(UpdateView):
     fields = '__all__'
     image_field = None
     meta = False
+
+    def get(self, request, *args, **kwargs):
+        key = self.model._meta.verbose_name
+        files = self.request.session.get(key)
+        obj = self.get_object()
+        id = obj.id
+
+        if files:
+            for it in list(files):
+                if it['id'] == id:
+                    if default_storage.exists(it['name']):
+                        print(it['name'] != obj.__dict__[self.image_field])
+                        if it['name'] != obj.__dict__[self.image_field]:
+                            
+                            default_storage.delete(it['name'])
+
+                    self.request.session[key].remove(it)
+                    self.request.session.modified = True
+
+        return super().get(request, *args, **kwargs)
+
 
     def get_context_data(self, **kwargs):
         context = super(BasedUpdateView, self).get_context_data(**kwargs)
@@ -376,8 +401,10 @@ def delete_image(request):
         file = request.POST.get("file")
 
         if request.session.get(key):
-            for it in request.session[key]:
+            for it in list(request.session[key]):
                 if it['name'] == file:
+                    if default_storage.exists(it['name']):
+                        default_storage.delete(it['name'])
                     request.session[key].remove(it)
                     request.session.modified = True
 
@@ -473,6 +500,12 @@ class StaticUpdate(BasedUpdateView):
     fields = "__all__"
     template_name = 'admin/static_add.html'
     success_url = 'static_info'
+
+    def get(self, request, *args, **kwargs):
+        k = self.model._meta.verbose_name
+        keys = [f'{k}_image', f'{k}_icon']
+        predelete_image(keys, self.request, self.get_object().id)
+        return super().get(request, *args, **kwargs)
 
     def get_object(self):
         try:
@@ -845,6 +878,14 @@ class CategoryCreate(BasedCreateView):
     success_url = 'category_list'
     related_model = Atributs
 
+    def get(self, request, *args, **kwargs):
+        k = self.model._meta.verbose_name
+        keys = [f'{k}_image', f'{k}_icon']
+        predelete_image(keys, self.request, '')
+
+
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -927,6 +968,16 @@ class CategoryEdit(BasedUpdateView):
     template_name = 'admin/category_form.html'
     success_url = 'category_list'
     related_model = Atributs
+
+
+    def get(self, request, *args, **kwargs):
+        k = self.model._meta.verbose_name
+        keys = [f'{k}_image', f'{k}_icon']
+        predelete_image(keys, self.request, self.get_object().id)
+
+        return super().get(request, *args, **kwargs)
+
+    
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1348,6 +1399,14 @@ class BanerCreate(BasedCreateView):
     template_name = 'admin/baners_form.html'
     success_url = 'baners_list'
 
+    def get(self, request, *args, **kwargs):
+        k = self.model._meta.verbose_name
+        keys = [f'{k}_{lang.code}' for lang in Languages.objects.filter(active=True)]
+        predelete_image(keys, self.request, '')
+
+        return super().get(request, *args, **kwargs)
+    
+
     def get_request_data(self):
         data_dict = super().get_request_data()
         key = self.model._meta.verbose_name
@@ -1370,6 +1429,14 @@ class BanerEdit(BasedUpdateView):
     model = Baners
     template_name = 'admin/baners_form.html'
     success_url = 'baners_list'
+
+    def get(self, request, *args, **kwargs):
+        k = self.model._meta.verbose_name
+        keys = [f'{k}_{lang.code}' for lang in Languages.objects.filter(active=True)]
+        predelete_image(keys, self.request, '')
+
+        return super().get(request, *args, **kwargs)
+
 
     def get_request_data(self):
         data_dict = super().get_request_data()
