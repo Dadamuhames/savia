@@ -71,17 +71,7 @@ class BasedCreateView(CreateView):
 
     def get(self, request, *args, **kwargs):
         key = self.model._meta.verbose_name
-        files = self.request.session.get(key)
-
-        if files:
-            for it in list(files):
-                if it['id'] == '':
-                    if default_storage.exists(it['name']):
-                        default_storage.delete(it['name'])
-
-                    self.request.session[key].remove(it)
-                    self.request.session.modified = True
-
+        predelete_image([key], request, '')
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -171,22 +161,9 @@ class BasedUpdateView(UpdateView):
 
     def get(self, request, *args, **kwargs):
         key = self.model._meta.verbose_name
-        files = self.request.session.get(key)
         obj = self.get_object()
         id = obj.id
-
-        if files:
-            for it in list(files):
-                if it['id'] == id:
-                    if default_storage.exists(it['name']):
-                        print(it['name'] != obj.__dict__[self.image_field])
-                        if it['name'] != obj.__dict__[self.image_field]:
-                            
-                            default_storage.delete(it['name'])
-
-                    self.request.session[key].remove(it)
-                    self.request.session.modified = True
-
+        predelete_image([key], request, id)
         return super().get(request, *args, **kwargs)
 
 

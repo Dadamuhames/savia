@@ -69,10 +69,13 @@
                         <a class="list-sort text-muted">№</a>
                     </th>
                     <th>
-                        <a class="list-sort text-muted" data-sort="item-name">Название</a>
+                        <a class="list-sort text-muted">Название</a>
                     </th>
                     <th>
-                        <a class="list-sort text-muted" data-sort="item-name">Родительская категория</a>
+                        <a class="list-sort text-muted">Родительская категория</a>
+                    </th>
+                    <th>
+                        <a class="list-sort text-muted">Статус</a>
                     </th>
                     <th>
                         <a class="list-sort text-muted" data-sort="item-name">Иконка</a>
@@ -104,6 +107,13 @@
                             {{ obj.parent.name|get_item:lang.code|cut_text }}
                             {% endif %}
                         </p>
+                    </td>
+                    <td>
+                        {% if obj.active %}
+                        <span class="badge bg-success-soft">Active</span>
+                        {% else %}
+                        <span class="badge bg-danger-soft">Inactive</span>
+                        {% endif %}
                     </td>
                     <td>
                         <div class="avatar align-middle me-2">
