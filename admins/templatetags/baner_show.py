@@ -34,6 +34,7 @@ def baner_thumb(image, **kwargs):
 
     if request is not None:
         final_url = '/media/' + str(url).split('\media\\')[-1].replace('\\', "/") 
+        print(final_url)
         return request.build_absolute_uri(final_url)
 
     return url
