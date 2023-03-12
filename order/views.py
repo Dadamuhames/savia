@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_list_or_404, get_object_or_404
 from .serializers import ShortAplicatinSerializer, OrderProductSerializer, OrderSierializer
-
+from django.db import transaction, DatabaseError, IntegrityError
+from django.core.exceptions import ValidationError
 # Create your views here.                                       
 
 
@@ -21,7 +22,6 @@ class AplicationCreateView(generics.CreateAPIView):
 class OrderCreateView(generics.CreateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSierializer
-
 
     def perform_create(self, serializer):
         order = serializer.save()
@@ -39,7 +39,7 @@ class OrderCreateView(generics.CreateAPIView):
                 'variant': product,
                 'order': order,
                 'count': count,
-                'price': price
+                'price': 20
             }
 
             order_product = OrderProducts.objects.create(**order_prod_data)
@@ -47,6 +47,16 @@ class OrderCreateView(generics.CreateAPIView):
                 
 
         order.total_price = total_price
+        order.full_clean()
         order.save()
 
         return order
+
+
+    def post(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                return super().post(request, *args, **kwargs)
+        except (IntegrityError, DatabaseError, ValidationError) as e:
+            return Response({'error': str(e)})
+    

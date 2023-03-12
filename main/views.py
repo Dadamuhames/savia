@@ -183,7 +183,6 @@ class BanersView(generics.ListAPIView):
     queryset = Baners.objects.filter(active=True).order_by('order')
 
 
-
 # designs view
 class DesignsListView(generics.ListAPIView):
     serializer_class = CustomDesighSerializer
