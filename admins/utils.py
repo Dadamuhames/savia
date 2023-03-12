@@ -216,9 +216,6 @@ def get_baner(key, id, request, def_data=None):
                 images = [it for it in list(files) if str(it['id']) == str(id)]
                 image = images[0]
                 baner_data[lang.code] = image['name']
-
-                request.session.get(f'{key}_{lang.code}').remove(image)
-                request.session.modified = True
             elif def_data:
                 baner_data[lang.code] = def_data.get(lang.code, '')
 
